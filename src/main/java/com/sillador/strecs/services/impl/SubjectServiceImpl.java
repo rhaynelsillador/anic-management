@@ -102,6 +102,8 @@ public class SubjectServiceImpl extends BaseService implements SubjectService {
         subject.setId(subjectDTO.getId());
         subject.setCode(subjectDTO.getCode());
         subject.setName(subjectDTO.getName());
+        subject.setUnits(subjectDTO.getUnits());
+        subject.setActive(subjectDTO.isActive());
         return  subject;
     }
 
@@ -110,9 +112,13 @@ public class SubjectServiceImpl extends BaseService implements SubjectService {
         dto.setId(subject.getId());
         dto.setCode(subject.getCode());
         dto.setName(subject.getName());
+        dto.setActive(subject.isActive());
+        dto.setUnits(subject.getUnits());
         if(subject.getYearLevel() != null) {
             dto.setYearLevel(subject.getYearLevel().getName());
         }
+        dto.setCreatedDate(subject.getCreatedDate());
+        dto.setUpdatedDate(subject.getUpdatedDate());
         return  dto;
     }
 

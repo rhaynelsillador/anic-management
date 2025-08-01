@@ -22,6 +22,12 @@ public class Subject {
     @ManyToOne
     private YearLevel yearLevel;
 
+    @Column(columnDefinition = "boolean default true")
+    private boolean active;
+
+    @Column(columnDefinition = "int default 0")
+    private int units;
+
     @Column(updatable = false)
     private LocalDateTime createdDate;
     private LocalDateTime updatedDate;

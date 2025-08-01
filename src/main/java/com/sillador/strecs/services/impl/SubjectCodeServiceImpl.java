@@ -1,10 +1,8 @@
 package com.sillador.strecs.services.impl;
 
-import com.sillador.strecs.dto.EnrollmentDTO;
-import com.sillador.strecs.dto.SectionDTO;
-import com.sillador.strecs.dto.SubjectCodeDTO;
-import com.sillador.strecs.dto.SubjectCodeRequestDTO;
+import com.sillador.strecs.dto.*;
 import com.sillador.strecs.entity.*;
+import com.sillador.strecs.repositories.GradeRepository;
 import com.sillador.strecs.repositories.SchoolYearRepository;
 import com.sillador.strecs.repositories.SectionRepository;
 import com.sillador.strecs.repositories.SubjectCodeRepository;
@@ -13,6 +11,7 @@ import com.sillador.strecs.repositories.specifications.SectionSpecification;
 import com.sillador.strecs.repositories.specifications.SubjectCodeSpecification;
 import com.sillador.strecs.services.*;
 import com.sillador.strecs.utility.*;
+import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -37,22 +36,26 @@ public class SubjectCodeServiceImpl extends BaseService implements SubjectCodeSe
     private final SectionService sectionService;
     private final TeacherService teacherService;
     private final EnrollmentService enrollmentService;
+    private final GradeRepository gradeRepository;
+    private final StudentService studentService;
 
     @Autowired
     private SchoolYearRepository schoolYearRepository;
 
-    public SubjectCodeServiceImpl(SubjectCodeRepository subjectCodeRepository, SubjectService subjectService,  RoomService roomService, SectionService sectionService, TeacherService teacherService, EnrollmentService enrollmentService){
+    public SubjectCodeServiceImpl(SubjectCodeRepository subjectCodeRepository, SubjectService subjectService,  RoomService roomService, SectionService sectionService, TeacherService teacherService, EnrollmentService enrollmentService, GradeRepository gradeRepository, StudentService studentService){
         this.subjectCodeRepository = subjectCodeRepository;
         this.subjectService = subjectService;
         this.roomService = roomService;
         this.sectionService = sectionService;
         this.teacherService = teacherService;
         this.enrollmentService = enrollmentService;
+        this.gradeRepository = gradeRepository;
+        this.studentService = studentService;
     }
 
 
     @Override
-    public BaseResponse getAll(@org.jetbrains.annotations.NotNull Map<String, String> query) {
+    public BaseResponse getAll(@NotNull Map<String, String> query) {
         String sorting = query.getOrDefault("sort", "id,desc");
         int limit = Integer.parseInt(query.getOrDefault("limit", String.valueOf(10)));
         int page = Integer.parseInt(query.getOrDefault("page", String.valueOf(0)));
@@ -89,7 +92,7 @@ public class SubjectCodeServiceImpl extends BaseService implements SubjectCodeSe
         if(schoolYear.isEmpty()){
             return error("School year not yet started");
         }
-        List<SubjectCode> subjectCodes = new ArrayList<>();
+//        List<SubjectCode> subjectCodes = new ArrayList<>();
         for (SubjectCodeDTO dto : subjectCodeRequest.getSubjects()){
             // Check DB if the subjectCode.code already exist
 
@@ -102,16 +105,23 @@ public class SubjectCodeServiceImpl extends BaseService implements SubjectCodeSe
                 return error("Subjects is required");
             }
 
-            Optional<SubjectCode> subjectCodeTmp = subjectCodeRepository.findBySectionAndSubjectAndSchoolYear(sectionOptional.get(), subject.get(), schoolYear.get().getYear());
-            SubjectCode subjectCode;
-            if(subjectCodeTmp.isPresent()){
-//                return error("Subject code for Grade level [" + sectionOptional.get().getName() +"] already exist.");
-                subjectCode = subjectCodeTmp.get();
-            }else{
-                subjectCode = new SubjectCode();
-                subjectCode.setEndTime(dto.getEndTime());
-                subjectCode.setStartTime(dto.getStartTime());
+            // Get the current subject code to enable the editing
+            SubjectCode subjectCode = subjectCodeRepository.findByCode(dto.getCode()).orElse(null);
+
+            // If the code does not exist or null check the subject code if already tagged
+            if(subjectCode == null) {
+                Optional<SubjectCode> subjectCodeTmp = subjectCodeRepository.findBySectionAndSubjectAndSchoolYear(sectionOptional.get(), subject.get(), schoolYear.get().getYear());
+                if (subjectCodeTmp.isPresent()) {
+                    subjectCode = subjectCodeTmp.get();
+                } else {
+                    subjectCode = new SubjectCode();
+                    subjectCode.setEndTime(dto.getEndTime());
+                    subjectCode.setStartTime(dto.getStartTime());
+                }
             }
+
+
+            System.out.println(subjectCode.getId() + "<><>" + subjectCode.getCode());
 
             subjectCode.setSubject(subject.get());
             // Set value if adding new subject code
@@ -130,9 +140,10 @@ public class SubjectCodeServiceImpl extends BaseService implements SubjectCodeSe
                 Optional<Room> roomOption = roomService.findById(Long.parseLong(dto.getRoom()));
                 subjectCode.setRoom(roomOption.orElse(null));
             }
-
+            System.out.println(dto.getAdviser());
             if(dto.getAdviser() != null && !dto.getAdviser().isBlank() && StringValidator.isNumeric(dto.getAdviser())){
                 Optional<Teacher> teacherOptional = teacherService.findById(Long.parseLong(dto.getAdviser()));
+                System.out.println(teacherOptional.get().getFirstName());
                 subjectCode.setAdviser(teacherOptional.orElse(null));
             }else{
                 subjectCode.setAdviser(null);
@@ -140,9 +151,10 @@ public class SubjectCodeServiceImpl extends BaseService implements SubjectCodeSe
 
             subjectCode.setSection(sectionOptional.get());
 
-            subjectCodes.add(subjectCode);
+            subjectCodeRepository.save(subjectCode);
+//            subjectCodes.add(subjectCode);
         }
-        subjectCodeRepository.saveAll(subjectCodes);
+//        subjectCodeRepository.saveAll(subjectCodes);
         return new BaseResponse().success();
     }
 
@@ -167,9 +179,9 @@ public class SubjectCodeServiceImpl extends BaseService implements SubjectCodeSe
             return error("Invalid subject code request.");
         }
 
-        List<Enrollment> enrollments = enrollmentService.findAllBySectionAndSubject(subjectCode.get().getSection());
+        List<Enrollment> enrollments = enrollmentService.findAllBySection(subjectCode.get().getSection());
         List<EnrollmentDTO> dos = new ArrayList<>();
-        enrollments.forEach(d-> dos.add(enrollmentService.toDTO(d)));
+        enrollments.forEach(d-> dos.add(enrollmentService.toDTO(d, true)));
         BaseResponse baseResponse = success("Success").build(dos);
         baseResponse.setPage(new com.sillador.strecs.utility.Page(enrollments.size(), 0));
         return baseResponse;
@@ -179,6 +191,67 @@ public class SubjectCodeServiceImpl extends BaseService implements SubjectCodeSe
     public Optional<SubjectCode> findByCode(String subjectCode) {
         return subjectCodeRepository.findByCode(subjectCode);
     }
+
+    @Override
+    public List<AcademicRecordSubjectCodeDTO> findAllByEnrollmentAsDTO(Enrollment enrollment) {
+        List<Grade> grades = gradeRepository.findAllByEnrollmentAndGradingPeriod(enrollment, 4);
+        List<AcademicRecordSubjectCodeDTO> dtos = new ArrayList<>();
+        grades.forEach(d-> {
+            SubjectCode subjectCode = d.getSubjectCode();
+            Subject subject = subjectCode.getSubject();
+
+
+
+            AcademicRecordSubjectCodeDTO subjectInfo = new AcademicRecordSubjectCodeDTO();
+            subjectInfo.setAdviser(subjectInfo.getAdviser());
+            subjectInfo.setSubjectName(subject.getName());
+            subjectInfo.setSubjectCode(subjectCode.getCode());
+            if(subjectCode.getRoom() != null) {
+                subjectInfo.setRoomNum(subjectCode.getRoom().getRoomNo() + " " + subjectCode.getRoom().getBuilding());
+            }
+            subjectInfo.setGrades(d.getGradeScore());
+            subjectInfo.setRemarks("Passed");
+            subjectInfo.setUnits(subject.getUnits());
+            if(d.getGradeScore() >= 75){
+                subjectInfo.setStatus("Passed");
+            }else{
+                subjectInfo.setStatus("Failed");
+            }
+            if(subjectCode.getAdviser() != null) {
+                subjectInfo.setAdviser(subjectCode.getAdviser().getFullName());
+            }
+
+            subjectInfo.setGroupYearLevel(subject.getYearLevel().getGroupYearLevel());
+
+
+            dtos.add(subjectInfo);
+        });
+        return dtos;
+    }
+
+
+    @Override
+    public BaseResponse getStudentRecords(long id) {
+        Optional<Student> studentOptional = studentService.findById(id);
+        if(studentOptional.isEmpty()){
+            return error("Student does not exist");
+        }
+        List<Enrollment> enrollments = enrollmentService.findAllByStudentOrderBySchoolYearAsc(studentOptional.get());
+
+        List<AcademicRecordDTO> academicRecordDTOS = new ArrayList<>();
+        // Generate enrollment records without student info
+
+        enrollments.forEach(d -> {
+            AcademicRecordDTO recordDTO = new AcademicRecordDTO();
+            recordDTO.setEnrollment(enrollmentService.toDTO(d, false));
+
+            recordDTO.setSubjects(findAllByEnrollmentAsDTO(d));
+
+            academicRecordDTOS.add(recordDTO);
+        });
+        return success().build(academicRecordDTOS);
+    }
+
 
     private SubjectCodeDTO toDTO(SubjectCode d){
         SubjectCodeDTO dto = new SubjectCodeDTO();
@@ -192,11 +265,23 @@ public class SubjectCodeServiceImpl extends BaseService implements SubjectCodeSe
         dto.setSchoolYear(d.getSchoolYear());
         dto.setStartTime(d.getStartTime());
         dto.setEndTime(d.getEndTime());
-        dto.setYearLevel(d.getSubject().getYearLevel().getName());
+
+        dto.setActive(d.isActive());
+        dto.setLocked(d.isLocked());
+
+        Subject subject = d.getSubject();
+        dto.setYearLevel(subject.getYearLevel().getName());
+        dto.setUnits(subject.getUnits());
+
         dto.setSection(d.getSection().getCode());
         if(d.getRoom() != null) {
             dto.setRoom(d.getRoom().getBuilding() + " - " + d.getRoom().getRoomNo());
         }
+
+        dto.setCreatedDate(d.getCreatedDate());
+        dto.setUpdatedDate(d.getUpdatedDate());
+
+
         return dto;
     }
 }

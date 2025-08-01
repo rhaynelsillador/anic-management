@@ -20,13 +20,15 @@ public interface EnrollmentService {
 
     BaseResponse enrollStudent(@Valid NewStudentDTO studentDTO);
 
-    List<Enrollment> findAllBySectionAndSubject(Section section);
+    List<Enrollment> findAllBySection(Section section);
 
-    EnrollmentDTO toDTO(Enrollment d);
+    EnrollmentDTO toDTO(Enrollment d, boolean includeStudent);
 
     Optional<Enrollment> findByStudentAndSchoolYear(Student student, int year);
 
     List<Enrollment> findAllEnrolledStudents(SchoolYear oldSchoolYear);
 
     Enrollment save(Enrollment enrollment);
+
+    List<Enrollment> findAllByStudentOrderBySchoolYearAsc(Student student);
 }

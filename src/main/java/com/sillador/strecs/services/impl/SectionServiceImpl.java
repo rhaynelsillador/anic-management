@@ -92,7 +92,8 @@ public class SectionServiceImpl extends BaseService implements SectionService {
     @Override
     public BaseResponse update(Long id, SectionDTO dto) {
         Teacher teacher = null;
-        if(dto.getAdviserId() != null) {
+
+        if(dto.getAdviserId() != 0) {
             Optional<Teacher> teacherOption = teacherService.findById(dto.getAdviserId());
             if (teacherOption.isEmpty()) {
                 return error("Adviser request is invalid");
@@ -119,9 +120,13 @@ public class SectionServiceImpl extends BaseService implements SectionService {
 
     @Override
     public BaseResponse create(SectionDTO dto) {
-        Optional<Teacher> teacher = teacherService.findById(dto.getAdviserId());
-        if(teacher.isEmpty()){
-            return error("Adviser request is invalid");
+        Teacher adviser = null;
+        if(dto.getAdviserId() > 0) {
+            Optional<Teacher> teacher = teacherService.findById(dto.getAdviserId());
+            if (teacher.isEmpty()) {
+                return error("Adviser request is invalid");
+            }
+            adviser = teacher.get();
         }
 
         Optional<YearLevel> yearLevel = yearLevelService.findById(dto.getYearLevelId());
@@ -137,7 +142,9 @@ public class SectionServiceImpl extends BaseService implements SectionService {
 
         Section section = toSection(dto, new Section());
         section.setSchoolYear(schoolYear.get().getYear());
-        section.setAdviser(teacher.get());
+        if(adviser != null) {
+            section.setAdviser(adviser);
+        }
         section.setYearLevel(yearLevel.get());
         section = sectionRepository.save(section);
         return success("Successfully created new section").build(section);

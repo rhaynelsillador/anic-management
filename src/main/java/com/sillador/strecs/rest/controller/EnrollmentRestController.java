@@ -36,5 +36,4 @@ public class EnrollmentRestController {
         return  enrollmentService.enrollStudent(dto);
     }
 
-
 }

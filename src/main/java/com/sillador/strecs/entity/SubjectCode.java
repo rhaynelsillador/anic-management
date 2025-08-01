@@ -11,7 +11,7 @@ import java.util.List;
 @Setter
 @Getter
 @Entity
-@Table(name = "subject_codes")
+@Table(name = "subject_codes", uniqueConstraints = @UniqueConstraint(columnNames = {"subject_id", "section_id", "school_year"}))
 public class SubjectCode {
 
     @Id
@@ -24,13 +24,19 @@ public class SubjectCode {
     private Subject subject;
     @ManyToOne
     private Room room;
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     private Section section;
 
     @ManyToOne
     private Teacher adviser;
 
     private int schoolYear;
+
+    @Column(columnDefinition = "boolean default true")
+    private boolean active;
+
+    @Column(columnDefinition = "boolean default false")
+    private boolean locked;
 
     private Time startTime;
     private Time endTime;

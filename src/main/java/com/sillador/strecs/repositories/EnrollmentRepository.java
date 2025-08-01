@@ -33,5 +33,5 @@ public interface EnrollmentRepository extends JpaRepository<Enrollment, Long>, J
     List<Object[]> countByEnrollmentTypeNative(int schoolYear);
 
 
-
+    List<Enrollment> findAllByStudentOrderBySchoolYearAsc(Student student);
 }

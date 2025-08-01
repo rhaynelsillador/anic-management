@@ -38,4 +38,10 @@ public class SubjectCodeRestController {
     public BaseResponse getSubjectsByAdviser(@PathVariable String code){
         return  subjectCodeService.getStudentsBySubjectCode(code);
     }
+
+
+    @GetMapping("/student/{id}")
+    public BaseResponse getStudentRecords(@PathVariable long id){
+        return  subjectCodeService.getStudentRecords(id);
+    }
 }

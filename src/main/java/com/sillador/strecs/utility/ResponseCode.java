@@ -10,7 +10,7 @@ public enum ResponseCode {
     NOT_EXISTS(22),
     DUPLICATE(23),
     ERROR(50),
-    INTERNAL_SERVER_ERROR(55);
+    INTERNAL_SERVER_ERROR(55), NOT_FOUND(24);
 
     private final int code;
 

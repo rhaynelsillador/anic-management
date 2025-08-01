@@ -116,7 +116,7 @@ public class SchoolYearServiceImpl extends BaseService implements SchoolYearServ
             }
 
             // 2. Generate subject codes based from previous school year
-            List<Subject> subjects = subjectRepository.findAllByYearLevel(copy.getYearLevel());
+            List<Subject> subjects = subjectRepository.findAllByYearLevelAndActive(copy.getYearLevel(), true);
             for(Subject subject : subjects){
                 SubjectCode subjectCode = new SubjectCode();
                 subjectCode.setSubject(subject);

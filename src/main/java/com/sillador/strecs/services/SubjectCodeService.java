@@ -1,6 +1,10 @@
 package com.sillador.strecs.services;
 
+import com.sillador.strecs.dto.AcademicRecordSubjectCodeDTO;
+import com.sillador.strecs.dto.SubjectCodeDTO;
 import com.sillador.strecs.dto.SubjectCodeRequestDTO;
+import com.sillador.strecs.entity.Enrollment;
+import com.sillador.strecs.entity.Grade;
 import com.sillador.strecs.entity.SubjectCode;
 import com.sillador.strecs.utility.BaseResponse;
 
@@ -21,4 +25,9 @@ public interface SubjectCodeService {
     BaseResponse getStudentsBySubjectCode(String code);
 
     Optional<SubjectCode> findByCode(String subjectCode);
+
+    List<AcademicRecordSubjectCodeDTO> findAllByEnrollmentAsDTO(Enrollment enrollment);
+
+
+    BaseResponse getStudentRecords(long id);
 }

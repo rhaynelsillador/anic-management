@@ -12,5 +12,6 @@ public class GradeDTO {
     private Long studentId;
     private Float gradeScore;
     private Integer gradingPeriod;
+    private String subjectCode;
 
 }

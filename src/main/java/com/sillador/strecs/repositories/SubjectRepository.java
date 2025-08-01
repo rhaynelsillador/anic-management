@@ -12,6 +12,5 @@ import java.util.Optional;
 @Repository
 public interface SubjectRepository extends JpaRepository<Subject, Long>, JpaSpecificationExecutor<Subject> {
     Optional<Subject> findByCode(String code);
-
-    List<Subject> findAllByYearLevel(YearLevel yearLevel);
+    List<Subject> findAllByYearLevelAndActive(YearLevel yearLevel, boolean b);
 }

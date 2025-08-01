@@ -20,9 +20,9 @@ public class SubjectSpecification extends BaseSpecification{
         super();
     }
 
-    private static final List<String> filterKeys = List.of("code", "name", "yearLevel");
+    private static final List<String> filterKeys = List.of("code", "active", "name", "units", "active", "yearLevel", "createdDate", "updatedDate");
     @Getter
-    private static final List<String> sortedKeys = List.of("code", "name", "yearLevel", "yearLevelId");
+    private static final List<String> sortedKeys = filterKeys;
 
     public static Specification<Subject> filter(Map<String, String> params) {
         return (root, query, criteriaBuilder) -> {
@@ -36,6 +36,8 @@ public class SubjectSpecification extends BaseSpecification{
                         predicates.add(criteriaBuilder.like(
                                 yearLevelJoin.get("name").as(String.class), value
                         ));
+                    }else if(key.equals("active")){
+                        predicates.add(criteriaBuilder.equal(path.as(Boolean.class),  Boolean.parseBoolean(value)));
                     }else{
                         predicates.add(criteriaBuilder.like(path.as(String.class), "%" + value + "%"));
                     }

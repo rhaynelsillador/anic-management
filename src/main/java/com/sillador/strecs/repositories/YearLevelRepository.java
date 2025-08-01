@@ -2,6 +2,7 @@ package com.sillador.strecs.repositories;
 
 import com.sillador.strecs.entity.Student;
 import com.sillador.strecs.entity.YearLevel;
+import com.sillador.strecs.enums.GroupYearLevel;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
@@ -17,4 +18,6 @@ public interface YearLevelRepository extends JpaRepository<YearLevel, Long>, Jpa
     Optional<YearLevel> findLastYearLevelByLevelOrder();
 
     Optional<YearLevel> findByLevelOrder(int yearLevelOrder);
+
+    Optional<YearLevel> findByLevelOrderAndGroupYearLevel(int i, GroupYearLevel groupYearLevel);
 }

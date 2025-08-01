@@ -8,12 +8,9 @@ import com.sillador.strecs.repositories.EnrollmentRepository;
 import com.sillador.strecs.repositories.SchoolYearRepository;
 import com.sillador.strecs.repositories.specifications.BaseSpecification;
 import com.sillador.strecs.repositories.specifications.EnrollmentSpecification;
-import com.sillador.strecs.services.EnrollmentService;
-import com.sillador.strecs.services.SectionService;
-import com.sillador.strecs.services.StudentService;
-import com.sillador.strecs.services.YearLevelService;
+import com.sillador.strecs.services.*;
 import com.sillador.strecs.utility.BaseResponse;
-import com.sillador.strecs.utility.Config;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -22,8 +19,6 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
 import java.sql.Date;
-import java.sql.Timestamp;
-import java.time.Year;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -38,7 +33,11 @@ public class EnrollmentServiceImpl extends BaseService implements EnrollmentServ
     private final YearLevelService yearLevelService;
     private final SchoolYearRepository schoolYearRepository;
 
-    public EnrollmentServiceImpl(EnrollmentRepository enrollmentRepository, StudentService studentService, SectionService sectionService, YearLevelService yearLevelService, SchoolYearRepository schoolYearRepository){
+    public EnrollmentServiceImpl(EnrollmentRepository enrollmentRepository,
+                                 StudentService studentService,
+                                 SectionService sectionService,
+                                 YearLevelService yearLevelService,
+                                 SchoolYearRepository schoolYearRepository){
         this.enrollmentRepository = enrollmentRepository;
         this.studentService = studentService;
         this.sectionService = sectionService;
@@ -61,7 +60,7 @@ public class EnrollmentServiceImpl extends BaseService implements EnrollmentServ
         Page<Enrollment> pages = enrollmentRepository.findAll(spec, pageable);
 
         List<EnrollmentDTO> dos = new ArrayList<>();
-        pages.getContent().forEach(d -> dos.add(toDTO(d)));
+        pages.getContent().forEach(d -> dos.add(toDTO(d, true)));
 
         BaseResponse baseResponse = new BaseResponse().build(dos);
         baseResponse.setPage(new com.sillador.strecs.utility.Page(pages.getTotalElements(), pages.getSize()));
@@ -156,23 +155,33 @@ public class EnrollmentServiceImpl extends BaseService implements EnrollmentServ
     }
 
     @Override
-    public List<Enrollment> findAllBySectionAndSubject(Section section) {
+    public List<Enrollment> findAllBySection(Section section) {
+        for(Enrollment enrollment : enrollmentRepository.findAll()){
+            if(enrollment.getSection() != null) {
+                System.out.println(section.getId() + "::" +enrollment.getStudent().getStudentId() + ":" + enrollment.getSection().getId() + enrollment.getSection().getAdviser().getFirstName() + ":" + enrollment.getSchoolYear());
+            }
+        }
         return enrollmentRepository.findAllBySection(section);
     }
 
     @Override
-    public EnrollmentDTO toDTO(Enrollment d){
+    public EnrollmentDTO toDTO(Enrollment d, boolean includeStudent){
         EnrollmentDTO dto = new EnrollmentDTO();
         dto.setId(d.getId());
         dto.setEnrollmentDate(d.getEnrollmentDate());
         if(d.getSection() != null) {
             dto.setSection(d.getSection().getCode());
-            dto.setAdviser(d.getSection().getAdviser().getFullName());
+            if(d.getSection().getAdviser() != null){
+                dto.setAdviser(d.getSection().getAdviser().getFullName());
+            }
+
         }
         dto.setSchoolYear(d.getSchoolYear());
 
-        Student student = d.getStudent();
-        dto.setStudent(toStudentDTO(student));
+        if(includeStudent) {
+            Student student = d.getStudent();
+            dto.setStudent(toStudentDTO(student));
+        }
         if(d.getYearLevel() != null) {
             dto.setYearLevel(d.getYearLevel().getName());
         }
@@ -196,6 +205,11 @@ public class EnrollmentServiceImpl extends BaseService implements EnrollmentServ
     @Override
     public Enrollment save(Enrollment enrollment) {
         return enrollmentRepository.save(enrollment);
+    }
+
+    @Override
+    public List<Enrollment> findAllByStudentOrderBySchoolYearAsc(Student student) {
+        return enrollmentRepository.findAllByStudentOrderBySchoolYearAsc(student);
     }
 
     private StudentDTO toStudentDTO(Student student){

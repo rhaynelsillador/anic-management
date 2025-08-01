@@ -1,9 +1,6 @@
 package com.sillador.strecs.services.impl;
 
-import com.sillador.strecs.dto.GradeDTO;
-import com.sillador.strecs.dto.GradeInfoDTO;
-import com.sillador.strecs.dto.GradingPeriodDTO;
-import com.sillador.strecs.dto.SubjectDTO;
+import com.sillador.strecs.dto.*;
 import com.sillador.strecs.entity.*;
 import com.sillador.strecs.repositories.GradeRepository;
 import com.sillador.strecs.repositories.GradingPeriodRepository;
@@ -54,7 +51,7 @@ public class GradeServiceImpl extends BaseService implements GradeService {
 
         Section section = optionalSubjectCode.get().getSection();
 
-        List<Enrollment> enrollments = enrollmentService.findAllBySectionAndSubject(section);
+        List<Enrollment> enrollments = enrollmentService.findAllBySection(section);
 
 
         List<Grade> grades = gradeRepository.findAllBySubjectCode(optionalSubjectCode.get());
@@ -127,12 +124,19 @@ public class GradeServiceImpl extends BaseService implements GradeService {
         return findAllBySubjectCode(subjectCode);
     }
 
+    @Override
+    public List<Grade> findAllByEnrollment(Enrollment enrollment) {
+        // get the final grades only
+        return gradeRepository.findAllByEnrollmentAndGradingPeriod(enrollment, 4);
+    }
+
     private GradeDTO toDTO(Grade grade){
         GradeDTO gradeDTO = new GradeDTO();
         gradeDTO.setId(grade.getId());
         gradeDTO.setGradeScore(grade.getGradeScore());
         gradeDTO.setGradingPeriod(grade.getGradingPeriod());
         gradeDTO.setStudentId(grade.getEnrollment().getStudent().getId());
+        gradeDTO.setSubjectCode(grade.getSubjectCode().getCode());
         return gradeDTO;
     }
 

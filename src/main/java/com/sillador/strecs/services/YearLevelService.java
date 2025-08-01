@@ -1,5 +1,6 @@
 package com.sillador.strecs.services;
 
+import com.sillador.strecs.dto.YearLevelDTO;
 import com.sillador.strecs.entity.YearLevel;
 import com.sillador.strecs.utility.BaseResponse;
 import jakarta.validation.constraints.NotNull;
@@ -12,4 +13,8 @@ public interface YearLevelService {
     BaseResponse getAll(Map<String, String> query);
 
     Optional<YearLevel> findById(@NotNull(message = "Grade Level is required") Long yearLevel);
+
+    BaseResponse updateClass(long id, YearLevelDTO yearLevelDTO);
+
+    BaseResponse createNewClass(YearLevelDTO yearLevelDTO);
 }

@@ -4,6 +4,7 @@ import lombok.Getter;
 import lombok.Setter;
 
 import java.sql.Time;
+import java.time.LocalDateTime;
 
 @Setter
 @Getter
@@ -20,7 +21,13 @@ public class SubjectCodeDTO {
 
     private String section;
 
+    private boolean active;
+    private boolean locked;
+
     private Time startTime;
     private Time endTime;
 
+    private int units;
+    private LocalDateTime createdDate;
+    private LocalDateTime updatedDate;
 }

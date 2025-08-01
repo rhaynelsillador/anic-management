@@ -18,7 +18,7 @@ public class SectionDTO {
     private Long yearLevelId;
     private String adviser;
 //    @NotNull(message = "Adviser is required")
-    private Long adviserId;
+    private long adviserId;
 
     private int schoolYear;
 }

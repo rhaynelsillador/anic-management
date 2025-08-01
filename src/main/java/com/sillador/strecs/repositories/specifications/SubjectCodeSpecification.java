@@ -19,7 +19,7 @@ public class SubjectCodeSpecification{
         super();
     }
 
-    private static final List<String> filterKeys = List.of("code", "subjectCode", "yearLevel", "section", "adviser", "schoolYear", "room", "startTime", "endTime");
+    private static final List<String> filterKeys = List.of("code", "subjectCode", "yearLevel", "section", "adviser", "schoolYear", "room", "startTime", "endTime", "subject.units");
     @Getter
     private static final List<String> sortedKeys = filterKeys;
 
@@ -95,7 +95,13 @@ public class SubjectCodeSpecification{
 
             params.forEach((key, value) -> {
                 if (value != null && !value.isBlank() && filterKeys.contains(key)) {
+                    Join<SubjectCode, Subject> subject = root.join("subject");
+
+
+                    predicates.add(criteriaBuilder.equal(subject.get("active").as(boolean.class), true));
+
                     switch (key) {
+
                         case "yearLevel":
                             Join<SubjectCode, Subject> subjectJoin = root.join("subject");
                             // Join Subject → YearLevel
@@ -115,16 +121,30 @@ public class SubjectCodeSpecification{
                         case "adviser":
                             Join<SubjectCode, Teacher> adviser = root.join("adviser");
 
-                            Predicate firstNameLike = criteriaBuilder.like(
-                                    adviser.get("firstName"), "%" + value + "%"
+                            Expression<String> fullName = criteriaBuilder.concat(
+                                    criteriaBuilder.concat(adviser.get("firstName"), " "),
+                                    adviser.get("lastName")
                             );
 
-                            Predicate lastNameLike = criteriaBuilder.like(
-                                    adviser.get("lastName"), "%" + value + "%"
+                            Predicate fullNameLike = criteriaBuilder.like(
+                                    criteriaBuilder.lower(fullName),
+                                    "%" + value.toLowerCase() + "%"
                             );
+                            
+                            predicates.add(fullNameLike);
 
-                            Predicate nameLikePredicate = criteriaBuilder.or(firstNameLike, lastNameLike);
-                            predicates.add(nameLikePredicate);
+                            break;
+                        case "subject.units":
+                        case "subjectCode":
+                            if(key.equals("subjectCode")) {
+                                predicates.add(criteriaBuilder.like(
+                                        criteriaBuilder.lower(subject.get("code").as(String.class)), "%"+value+"%"
+                                ));
+                            }else{
+                                predicates.add(criteriaBuilder.equal(
+                                        subject.get("units").as(Integer.class), Integer.parseInt(value)
+                                ));
+                            }
 
                             break;
                         default:
