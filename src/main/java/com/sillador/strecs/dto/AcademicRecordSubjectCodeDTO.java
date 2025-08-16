@@ -15,7 +15,11 @@ public class AcademicRecordSubjectCodeDTO {
     private int units;
     private String adviser;
     private String roomNum;
-    private float grades;
+    private float firstQuarter;
+    private float secondQuarter;
+    private float thirdQuarter;
+    private float fourthQuarter;
+    private float finalGrade;
     private String status; /// Passed, Failed, Incomplete
     private String remarks;
 

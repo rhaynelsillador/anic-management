@@ -8,27 +8,20 @@ import com.sillador.strecs.repositories.SchoolYearRepository;
 import com.sillador.strecs.repositories.TeacherRepository;
 import com.sillador.strecs.services.DashboardReportService;
 import com.sillador.strecs.utility.BaseResponse;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
-import java.time.Year;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
 @Service
+@RequiredArgsConstructor
 public class DashboardReportServiceImpl extends BaseService implements DashboardReportService {
 
-    private EnrollmentRepository enrollmentRepository;
-    private SchoolYearRepository schoolYearRepository;
-    private TeacherRepository teacherRepository;
-
-    public DashboardReportServiceImpl(EnrollmentRepository enrollmentRepository, SchoolYearRepository schoolYearRepository, TeacherRepository teacherRepository){
-        this.enrollmentRepository = enrollmentRepository;
-        this.schoolYearRepository = schoolYearRepository;
-        this.teacherRepository = teacherRepository;
-    }
-
+    private final EnrollmentRepository enrollmentRepository;
+    private final SchoolYearRepository schoolYearRepository;
+    private final TeacherRepository teacherRepository;
 
     @Override
     public BaseResponse getReport(Map<String, String> query) {
@@ -66,7 +59,7 @@ public class DashboardReportServiceImpl extends BaseService implements Dashboard
 
         mainDashboardDTO.setStudentStatusCount(enrollmentRepository.countStudentByStatusNative(schoolYear.getYear()));
 
-
+        mainDashboardDTO.setStudentCountPerSchoolYear(enrollmentRepository.countStudentsPerSchoolYearNative().reversed());
         return success().build(mainDashboardDTO);
     }
 

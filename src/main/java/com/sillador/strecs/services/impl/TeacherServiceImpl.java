@@ -1,15 +1,10 @@
 package com.sillador.strecs.services.impl;
 
-import com.sillador.strecs.dto.StudentDTO;
 import com.sillador.strecs.dto.TeacherDTO;
-import com.sillador.strecs.entity.Student;
 import com.sillador.strecs.entity.Teacher;
-import com.sillador.strecs.repositories.StudentRepository;
 import com.sillador.strecs.repositories.TeacherRepository;
 import com.sillador.strecs.repositories.specifications.BaseSpecification;
-import com.sillador.strecs.repositories.specifications.StudentSpecification;
 import com.sillador.strecs.repositories.specifications.TeacherSpecification;
-import com.sillador.strecs.services.StudentService;
 import com.sillador.strecs.services.TeacherService;
 import com.sillador.strecs.utility.BaseResponse;
 import org.springframework.data.domain.Page;
@@ -18,22 +13,18 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
+import lombok.RequiredArgsConstructor;
 
-import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
 @Service
+@RequiredArgsConstructor
 public class TeacherServiceImpl extends BaseService implements TeacherService {
 
     private final TeacherRepository teacherRepository;
-
-    public TeacherServiceImpl(TeacherRepository teacherRepository){
-        this.teacherRepository = teacherRepository;
-    }
-
 
     @Override
     public BaseResponse getAllTeachers(@org.jetbrains.annotations.NotNull Map<String, String> query) {
@@ -49,21 +40,7 @@ public class TeacherServiceImpl extends BaseService implements TeacherService {
         Page<Teacher> studentPage = teacherRepository.findAll(spec, pageable);
 
         List<TeacherDTO> teacherDTOS = new ArrayList<>();
-        studentPage.getContent().forEach(d -> {
-            TeacherDTO teacherDTO = new TeacherDTO();
-            teacherDTO.setId(d.getId());
-            teacherDTO.setContactNo(d.getContactNo());
-            teacherDTO.setEmployeeNo(d.getEmployeeNo());
-            teacherDTO.setPosition(d.getPosition());
-            teacherDTO.setEmail(d.getEmail());
-
-            teacherDTO.setFirstName(d.getFirstName());
-            teacherDTO.setLastName(d.getLastName());
-            teacherDTO.setPhotoUrl(d.getPhotoUrl());
-            teacherDTO.setFullName(d.getFullName());
-
-            teacherDTOS.add(teacherDTO);
-        });
+        studentPage.getContent().forEach(d -> teacherDTOS.add(toDTO(d)));
 
         BaseResponse baseResponse = new BaseResponse().build(teacherDTOS);
         baseResponse.setPage(new com.sillador.strecs.utility.Page(studentPage.getTotalElements(), studentPage.getSize()));
@@ -73,6 +50,12 @@ public class TeacherServiceImpl extends BaseService implements TeacherService {
     @Override
     public Optional<Teacher> findById(long id) {
         return teacherRepository.findById(id);
+    }
+
+    @Override
+    public Optional<Teacher> findByAccountRef(long accountRef) {
+        // Since Account.accountRef references Teacher.id, we can use findById
+        return teacherRepository.findById(accountRef);
     }
 
     @Override
@@ -93,6 +76,21 @@ public class TeacherServiceImpl extends BaseService implements TeacherService {
         Teacher teacher = toTeacher(teacherDTO, optionalTeacher.get());
         teacherRepository.save(teacher);
         return success();
+    }
+
+    public TeacherDTO toDTO(Teacher d) {
+        TeacherDTO teacherDTO = new TeacherDTO();
+        teacherDTO.setId(d.getId());
+        teacherDTO.setContactNo(d.getContactNo());
+        teacherDTO.setEmployeeNo(d.getEmployeeNo());
+        teacherDTO.setPosition(d.getPosition());
+        teacherDTO.setEmail(d.getEmail());
+
+        teacherDTO.setFirstName(d.getFirstName());
+        teacherDTO.setLastName(d.getLastName());
+        teacherDTO.setPhotoUrl(d.getPhotoUrl());
+        teacherDTO.setFullName(d.getFullName());
+        return teacherDTO;
     }
 
     private Teacher toTeacher(TeacherDTO dto, Teacher teacher){

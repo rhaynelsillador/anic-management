@@ -20,10 +20,10 @@ public interface EnrollmentRepository extends JpaRepository<Enrollment, Long>, J
 
     List<Enrollment> findAllBySchoolYear(int year);
 
-    @Query(value = "SELECT gender, COUNT(*), y.name FROM student s inner join enrollments e on e.student_id = s.id inner join year_levels y on e.year_level_id = y.id where s.status = 0 and e.school_year = ?1 GROUP BY gender, y.id", nativeQuery = true)
+    @Query(value = "SELECT gender, COUNT(*), y.name FROM student s inner join enrollments e on e.student_id = s.id inner join year_levels y on e.year_level_id = y.id where e.status = 0 and e.school_year = ?1 GROUP BY gender, y.id", nativeQuery = true)
     List<Object[]> countByGenderNative(int schoolYear);
 
-    @Query(value = "SELECT y.name, COUNT(*) FROM student s inner join enrollments e on e.student_id = s.id inner join year_levels y on e.year_level_id = y.id where s.status = 0 and e.school_year = ?1 GROUP BY y.id", nativeQuery = true)
+    @Query(value = "SELECT y.name, COUNT(*) FROM student s inner join enrollments e on e.student_id = s.id inner join year_levels y on e.year_level_id = y.id where e.status = 0 and e.school_year = ?1 GROUP BY y.id", nativeQuery = true)
     List<Object[]> countStudentByGradeLevelNative(int schoolYear);
 
     @Query(value = "SELECT s.status, COUNT(*) FROM student s inner join enrollments e on e.student_id = s.id where e.school_year = ?1 GROUP BY s.status", nativeQuery = true)
@@ -31,6 +31,20 @@ public interface EnrollmentRepository extends JpaRepository<Enrollment, Long>, J
 
     @Query(value = "SELECT e.enrollment_type, COUNT(*) FROM enrollments e where e.school_year = ?1 GROUP BY e.enrollment_type", nativeQuery = true)
     List<Object[]> countByEnrollmentTypeNative(int schoolYear);
+
+    @Query(value = "SELECT \n" + //
+                "    sy.year,\n" + //
+                "    COUNT(CASE WHEN s.gender = 0 THEN 1 END) AS male_count,\n" + //
+                "    COUNT(CASE WHEN s.gender = 1 THEN 1 END) AS female_count,\n" + //
+                "    COUNT(*) AS total_student\n" + //
+                "FROM school_year sy\n" + //
+                "LEFT JOIN enrollments e \n" + //
+                "    ON e.school_year = sy.year\n" + //
+                "LEFT JOIN student s \n" + //
+                "    ON s.id = e.student_id\n" + //
+                "GROUP BY sy.year\n" + //
+                "ORDER BY sy.year desc limit 10", nativeQuery = true)
+    List<Object[]> countStudentsPerSchoolYearNative();
 
 
     List<Enrollment> findAllByStudentOrderBySchoolYearAsc(Student student);

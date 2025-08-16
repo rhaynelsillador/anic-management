@@ -19,7 +19,7 @@ public class EnrollmentSpecification{
         super();
     }
 
-    private static final List<String> filterKeys = List.of("student.studentId", "student.lrn", "student.firstName", "student.status", "student.lastName","enrollmentDate","yearLevel", "section.adviser.firstName", "schoolYear", "section", "student.gender", "student.contactNumber");
+    private static final List<String> filterKeys = List.of("student.studentId", "student.lrn", "student.firstName", "student.lastName","enrollmentDate","yearLevel", "section.adviser.firstName", "schoolYear", "section", "student.gender", "student.contactNumber", "status");
     @Getter
     private static final List<String> sortedKeys = filterKeys;
 
@@ -98,6 +98,18 @@ public class EnrollmentSpecification{
                             predicates.add(criteriaBuilder.like(
                                     section.get("code").as(String.class), "%"+value.toUpperCase()+"%"
                             ));
+                            break;
+                        case "status":
+                            StudentStatus studentStatus;
+                            try {
+                                studentStatus = StudentStatus.valueOf(value.toUpperCase());
+                                Path<String> path = root.get(key);
+                                predicates.add(criteriaBuilder.equal(path.as(Integer.class), studentStatus.ordinal()));
+                            } catch (Exception ignored) {
+                                Path<String> path = root.get(key);
+                                predicates.add(criteriaBuilder.equal(path.as(Integer.class), 100));
+                            }
+
                             break;
                         default:
                             Path<String> path = root.get(key);

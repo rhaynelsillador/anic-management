@@ -15,6 +15,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
+import lombok.RequiredArgsConstructor;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -22,14 +23,10 @@ import java.util.Map;
 import java.util.Optional;
 
 @Service
+@RequiredArgsConstructor
 public class RoomServiceImpl implements RoomService {
 
     private final RoomRepository roomRepository;
-
-    public RoomServiceImpl(RoomRepository roomRepository){
-        this.roomRepository = roomRepository;
-    }
-
 
     @Override
     public BaseResponse getAll(@org.jetbrains.annotations.NotNull Map<String, String> query) {

@@ -15,7 +15,12 @@ import com.sillador.strecs.services.SubjectService;
 import com.sillador.strecs.services.TeacherService;
 import com.sillador.strecs.services.YearLevelService;
 import com.sillador.strecs.utility.BaseResponse;
+import com.sillador.strecs.utility.CodeGenerator;
+
 import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
+
+import org.aspectj.apache.bcel.classfile.Code;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -29,15 +34,11 @@ import java.util.Map;
 import java.util.Optional;
 
 @Service
+@RequiredArgsConstructor
 public class SubjectServiceImpl extends BaseService implements SubjectService {
 
     private final SubjectRepository subjectRepository;
     private final YearLevelRepository yearLevelRepository;
-    public SubjectServiceImpl(SubjectRepository subjectRepository, YearLevelRepository yearLevelRepository){
-        this.subjectRepository = subjectRepository;
-        this.yearLevelRepository = yearLevelRepository;
-    }
-
 
     @Override
     public BaseResponse getAll(@org.jetbrains.annotations.NotNull Map<String, String> query) {
@@ -69,6 +70,11 @@ public class SubjectServiceImpl extends BaseService implements SubjectService {
     @Override
     public BaseResponse createSubject(@Valid  SubjectDTO subjectDTO) {
         Subject subject = toSubject(subjectDTO, null);
+
+        if(subject.getCode() == null || subject.getCode().isEmpty()) {
+            subject.setCode(CodeGenerator.generateCode());
+        }
+
         Optional<YearLevel> yearLevel = yearLevelRepository.findByName(subjectDTO.getYearLevel());
         if(yearLevel.isEmpty()){
             return error("Year level does not exist");
@@ -89,6 +95,10 @@ public class SubjectServiceImpl extends BaseService implements SubjectService {
         if(yearLevel.isEmpty()){
             return error("Year level does not exist");
         }
+        if(subject.getCode() == null || subject.getCode().isEmpty()) {
+            subject.setCode(CodeGenerator.generateCode());
+        }
+
         subject.setYearLevel(yearLevel.get());
         subjectRepository.save(subject);
         return success();

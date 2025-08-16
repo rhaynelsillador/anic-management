@@ -20,4 +20,6 @@ public interface YearLevelRepository extends JpaRepository<YearLevel, Long>, Jpa
     Optional<YearLevel> findByLevelOrder(int yearLevelOrder);
 
     Optional<YearLevel> findByLevelOrderAndGroupYearLevel(int i, GroupYearLevel groupYearLevel);
+
+    Optional<YearLevel> findByPrerequisiteYear(YearLevel yearLevel);
 }

@@ -17,19 +17,16 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
+import lombok.RequiredArgsConstructor;
 
 import java.util.Map;
 import java.util.Optional;
 
 @Service
+@RequiredArgsConstructor
 public class AppConfigServiceImpl extends BaseService implements AppConfigService {
 
     private final SchoolYearRepository schoolYearRepository;
-
-    public AppConfigServiceImpl(SchoolYearRepository schoolYearRepository){
-        this.schoolYearRepository = schoolYearRepository;
-    }
-
 
     @Override
     public BaseResponse getAppConfig() {

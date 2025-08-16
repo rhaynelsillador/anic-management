@@ -13,5 +13,8 @@ import java.util.Optional;
 public interface GradeRepository extends JpaRepository<Grade, Long>, JpaSpecificationExecutor<Grade> {
     List<Grade> findAllBySubjectCode(SubjectCode subjectCode);
 
-    List<Grade> findAllByEnrollmentAndGradingPeriod(Enrollment enrollment, int gradingPeriod);
+    List<Grade> findAllByEnrollmentAndGradingPeriod(Enrollment enrollment, long gradingPeriod);
+    Optional<Grade> findAllByEnrollmentAndGradingPeriodAndSubjectCode(Enrollment enrollment, long gradingPeriod, SubjectCode subjectCode);
+
+    List<Grade> findAllByEnrollment(Enrollment enrollment);
 }

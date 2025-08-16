@@ -9,6 +9,8 @@ import lombok.Setter;
 import java.time.LocalDateTime;
 import java.util.Set;
 
+import com.sillador.strecs.dto.TeacherDTO;
+
 @Setter
 @Getter
 public class AccountDTO {
@@ -35,4 +37,6 @@ public class AccountDTO {
     private Long roleId;
 
     private Long accountRef;
+
+    private TeacherDTO teacher;
 }

@@ -10,6 +10,7 @@ import com.sillador.strecs.repositories.specifications.BaseSpecification;
 import com.sillador.strecs.repositories.specifications.EnrollmentSpecification;
 import com.sillador.strecs.services.*;
 import com.sillador.strecs.utility.BaseResponse;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -25,6 +26,7 @@ import java.util.Map;
 import java.util.Optional;
 
 @Service
+@RequiredArgsConstructor
 public class EnrollmentServiceImpl extends BaseService implements EnrollmentService {
 
     private final EnrollmentRepository enrollmentRepository;
@@ -32,19 +34,6 @@ public class EnrollmentServiceImpl extends BaseService implements EnrollmentServ
     private final SectionService sectionService;
     private final YearLevelService yearLevelService;
     private final SchoolYearRepository schoolYearRepository;
-
-    public EnrollmentServiceImpl(EnrollmentRepository enrollmentRepository,
-                                 StudentService studentService,
-                                 SectionService sectionService,
-                                 YearLevelService yearLevelService,
-                                 SchoolYearRepository schoolYearRepository){
-        this.enrollmentRepository = enrollmentRepository;
-        this.studentService = studentService;
-        this.sectionService = sectionService;
-        this.yearLevelService = yearLevelService;
-        this.schoolYearRepository = schoolYearRepository;
-    }
-
 
     @Override
     public BaseResponse getAll(@org.jetbrains.annotations.NotNull Map<String, String> query) {
@@ -87,11 +76,6 @@ public class EnrollmentServiceImpl extends BaseService implements EnrollmentServ
                 return error("Invalid year level request");
             }
             Student student1 = student.get();
-            if(student1.getStatus() == StudentStatus.ENROLLED){
-                return error("Invalid student request with LRN : " + student1.getLrn() + " detected has already enrolled.");
-            }
-
-
 
             // Check if the student already enrolled for current school year
             Enrollment enrollment = enrollmentRepository.findByStudentAndSchoolYear(student1, schoolYear.get().getYear()).orElse(new Enrollment(student1, section.get()));
@@ -100,15 +84,9 @@ public class EnrollmentServiceImpl extends BaseService implements EnrollmentServ
             enrollment.setEnrollmentDate(new Date(System.currentTimeMillis()));
             enrollment.setSchoolYear(schoolYear.get().getYear());
             enrollment.setEnrollmentType(EnrollmentType.EXISTING);
+            enrollment.setStatus(StudentStatus.ENROLLED);
 
             enrollments.add(enrollment);
-        }
-        // Tag student as ENROLLED to remove from the Not Enrolled list
-        for (Enrollment enrollment : enrollments){
-            Student student = enrollment.getStudent();
-            student.setStatus(StudentStatus.ENROLLED);
-            // Update Student status as Enrolled
-            studentService.save(student);
         }
 
         // Save as array to have one transaction only on the Database
@@ -145,13 +123,13 @@ public class EnrollmentServiceImpl extends BaseService implements EnrollmentServ
             return error("Invalid Grade level selected");
         }
 
-        student.setStatus(StudentStatus.ENROLLED);
         studentService.update(student);
 
         enrollment.setYearLevel(yearLevel.get());
 
-        enrollment = enrollmentRepository.save(enrollment);
-        return success("Successfully enrolled").build(enrollment);
+        enrollmentRepository.save(enrollment);
+        
+        return success("Successfully enrolled");
     }
 
     @Override
@@ -212,6 +190,11 @@ public class EnrollmentServiceImpl extends BaseService implements EnrollmentServ
         return enrollmentRepository.findAllByStudentOrderBySchoolYearAsc(student);
     }
 
+    @Override
+    public void deleteAll(List<Enrollment> enrollmentList2) {
+        enrollmentRepository.deleteAll(enrollmentList2);
+    }
+
     private StudentDTO toStudentDTO(Student student){
         StudentDTO studentDTO = new StudentDTO();
         studentDTO.setId(student.getId());
@@ -224,6 +207,7 @@ public class EnrollmentServiceImpl extends BaseService implements EnrollmentServ
         studentDTO.setContactNumber(student.getContactNumber());
         studentDTO.setGender(student.getGender());
         studentDTO.setStatus(student.getStatus());
+        studentDTO.setPhotoUrl(student.getPhotoUrl()); // Include photo URL
 
         studentDTO.setFullName((student.getLastName() + ", " + student.getFirstName() + " " + student.getMiddleName())
                 .replace("null", "")

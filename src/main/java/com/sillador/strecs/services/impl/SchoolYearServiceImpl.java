@@ -1,5 +1,6 @@
 package com.sillador.strecs.services.impl;
 
+import com.sillador.strecs.dto.InitSchoolYearDTO;
 import com.sillador.strecs.dto.SchoolYearDTO;
 import com.sillador.strecs.entity.*;
 import com.sillador.strecs.enums.EnrollmentType;
@@ -9,6 +10,7 @@ import com.sillador.strecs.services.*;
 import com.sillador.strecs.utility.BaseResponse;
 import com.sillador.strecs.utility.CodeGenerator;
 import jakarta.validation.constraints.NotNull;
+import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeanUtils;
@@ -19,6 +21,7 @@ import java.util.Map;
 import java.util.Optional;
 
 @Service
+@RequiredArgsConstructor
 public class SchoolYearServiceImpl extends BaseService implements SchoolYearService {
 
     private static Logger logger = LoggerFactory.getLogger(SchoolYearServiceImpl.class);
@@ -31,49 +34,70 @@ public class SchoolYearServiceImpl extends BaseService implements SchoolYearServ
     private final SectionRepository sectionRepository;
     private final SubjectRepository subjectRepository;
 
-    public SchoolYearServiceImpl(SchoolYearRepository schoolYearRepository,
-                                 EnrollmentService enrollmentService,
-                                 YearLevelRepository yearLevelRepository,
-                                 StudentService studentService,
-                                 SubjectCodeRepository subjectCodeRepository,
-                                 SectionRepository sectionRepository,
-                                 SubjectRepository subjectRepository
-                                 ) {
-        this.schoolYearRepository = schoolYearRepository;
-        this.enrollmentService = enrollmentService;
-        this.yearLevelRepository = yearLevelRepository;
-        this.studentService = studentService;
-        this.subjectCodeRepository = subjectCodeRepository;
-        this.sectionRepository = sectionRepository;
-        this.subjectRepository = subjectRepository;
-    }
-
     @Override
     public BaseResponse getAll(Map<String, String> query) {
-        return null;
+        List<SchoolYear> schoolYears = schoolYearRepository.findAll();
+        BaseResponse baseResponse = new BaseResponse().build(schoolYears);
+        baseResponse.setPage(new com.sillador.strecs.utility.Page(schoolYears.size(), schoolYears.size()));
+        return baseResponse;
     }
 
     @Override
     public Optional<SchoolYear> findById(Long schoolYear) {
-        return Optional.empty();
+        return schoolYearRepository.findById(schoolYear);
     }
 
-    @Override
-    public BaseResponse openNewSchoolYear(SchoolYearDTO schoolYearDTO) {
-        Optional<SchoolYear> schoolYearOptional = schoolYearRepository.findByYear(schoolYearDTO.getYear());
-        if(schoolYearOptional.isPresent()){
-            return error("School year " + schoolYearDTO.getYear() + " already exist");
-        }
 
+
+    @Override
+    public BaseResponse createNewSchoolYear(SchoolYearDTO schoolYearDTO) {
         SchoolYear schoolYear = new SchoolYear();
+        schoolYear.setCurrent(false);
         schoolYear.setOpening(schoolYearDTO.getOpening());
         schoolYear.setClosing(schoolYearDTO.getClosing());
         schoolYear.setYear(schoolYearDTO.getYear());
+
+        schoolYearRepository.save(schoolYear);
+        return success();
+    }
+
+    @Override
+    public BaseResponse updateSchoolYear(long id, SchoolYearDTO schoolYearDTO) {
+        Optional<SchoolYear> schoolYearOptional = schoolYearRepository.findById(id);
+        if(schoolYearOptional.isEmpty()){
+            return error("School year not found");
+        }
+        SchoolYear schoolYear = schoolYearOptional.get();
+        schoolYear.setOpening(schoolYearDTO.getOpening());
+        schoolYear.setClosing(schoolYearDTO.getClosing());
+        schoolYear.setYear(schoolYearDTO.getYear());
+
+        schoolYearRepository.save(schoolYear);
+        return success();
+    }
+
+    @Override
+    public BaseResponse openNewSchoolYear(InitSchoolYearDTO initSchoolYearDTO) {
+        Optional<SchoolYear> schoolYearOptional = schoolYearRepository.findByYear(initSchoolYearDTO.getSchoolYearId());
+        if(schoolYearOptional.isEmpty()){
+            return error("School year " + initSchoolYearDTO.getSchoolYearId() + " does not exist");
+        }
+
+        SchoolYear schoolYear = schoolYearOptional.get();
+        // Check if the school year is already active
         schoolYear.setCurrent(true);
 
         // get the current active school year and close it
         SchoolYear currentSchoolYear = schoolYearRepository.findByIsCurrent(true).orElse(null);
         if(currentSchoolYear != null) {
+
+            // Check if the new school year is greater than the current school year
+            if(currentSchoolYear.getYear() > schoolYear.getYear()){
+                return error("School year " + schoolYear.getYear() + " must be greater than the current school year " + currentSchoolYear.getYear());
+            }else if(currentSchoolYear.getYear() == schoolYear.getYear()){
+                return error("You cannot reinitialize the current school year " + currentSchoolYear.getYear() + ". Please select a different school year.");
+            }
+
             currentSchoolYear.setCurrent(false);
             schoolYearRepository.save(currentSchoolYear);
         }
@@ -81,18 +105,19 @@ public class SchoolYearServiceImpl extends BaseService implements SchoolYearServ
         // Save the new active current school year
         schoolYear = schoolYearRepository.save(schoolYear);
 
-        return prepareAllStudents(currentSchoolYear, schoolYear);
+        System.out.println("current school year opened : " + currentSchoolYear.getYear());
+        System.out.println("New School Year ID : " + schoolYear.getId());
+
+        if(currentSchoolYear == null){
+            return success();
+        }
+        return prepareAllStudents(currentSchoolYear, schoolYear, initSchoolYearDTO);
     }
 
-    public BaseResponse prepareAllStudents(@NotNull SchoolYear oldSchoolYear, @NotNull  SchoolYear newSchoolYear){
-        List<Enrollment> enrollmentList = enrollmentService.findAllEnrolledStudents(oldSchoolYear);
-        YearLevel yearLevel = yearLevelRepository.findLastYearLevelByLevelOrder().orElse(null);
-        if(yearLevel == null){
-            return error("Year level is not properly set");
-        }
+    public BaseResponse prepareAllStudents(@NotNull SchoolYear oldSchoolYear, @NotNull  SchoolYear newSchoolYear, InitSchoolYearDTO initSchoolYearDTO){
 
         // 1. Generate sections based from previous school year
-        List<Section> sections = sectionRepository.findAll();
+        List<Section> sections = sectionRepository.findAllBySchoolYear(oldSchoolYear.getYear());
         for(Section section : sections){
             logger.info("Section detected : {} {} {}", section.getCode(), section.getSchoolYear(), section.getYearLevel().getName());
             Section copy = new Section();
@@ -137,39 +162,41 @@ public class SchoolYearServiceImpl extends BaseService implements SchoolYearServ
             }
         }
 
-
-
-
-
+        List<Enrollment> enrollmentList = enrollmentService.findAllEnrolledStudents(oldSchoolYear);
 
         enrollmentList.forEach(d->{
-            YearLevel studentYearLevel = d.getYearLevel();
             Student student = d.getStudent();
-            // Processed only the students who is actively enrolled
-            if(student.getStatus() == StudentStatus.ENROLLED) {
-                if (studentYearLevel.getId() == yearLevel.getId()) {
-                    // 1. Do changes to make the student graduate
-                    // 2. Check for grades if incomplete.
-                    student.setStatus(StudentStatus.GRADUATED);
+            System.out.println("Processing student: " + student.getFullName() + " with status: " + d.getStatus());
+            // Processed only the students who are actively enrolled
+            if(d.getStatus() == StudentStatus.OPEN || d.getStatus() == StudentStatus.ENROLLED) {
+                Optional<YearLevel> newYearLevel = yearLevelRepository.findByPrerequisiteYear(d.getYearLevel());
+
+                System.out.println("Student : " + student.getStudentId() + " with year level: " + d.getYearLevel().getName() + " new year level: " + newYearLevel.map(YearLevel::getName).orElse("None"));
+
+                if (newYearLevel.isEmpty()) {
+
+                    d.setGraduated(initSchoolYearDTO.getGraduationDate());
+                    d.setStatus(StudentStatus.GRADUATED);
+
+
+                    d.setBatch(initSchoolYearDTO.getBatch());
+
+                    enrollmentService.save(d);
 
                 } else {
-                    // 1. Change if the student is incomplete
-                    // 2. Enroll student to new school year
-
-                    student.setStatus(StudentStatus.OPEN);
-
                     Enrollment enrollment = new Enrollment();
                     // Allow student to be enroll on the next school year
                     enrollment.setSchoolYear(newSchoolYear.getYear());
                     enrollment.setStudent(student);
                     enrollment.setEnrollmentType(EnrollmentType.EXISTING);
-                    // Add 1 year level
+                    enrollment.setStatus(StudentStatus.OPEN);
 
-                    int yearLevelOrder = d.getYearLevel().getLevelOrder();
-                    // 3. Get the next year level to be assigned automatically
-                    Optional<YearLevel> newYearLevel = yearLevelRepository.findByLevelOrder(yearLevelOrder + 1);
+                    System.out.println("Enrolling student: " + student.getFullName() + " to the next year level " + d.getYearLevel().getName());
+                    /// Get the next year level based on the prerequisite year level
+
                     newYearLevel.ifPresent(enrollment::setYearLevel);
 
+                    System.out.println(enrollment.getYearLevel() + " >>> ");
                     System.out.println(student.getStudentId() + " Enrolled to grade " + enrollment.getYearLevel().getName() +" from " + d.getYearLevel().getName() );
 
                     // 4. Save the student enrollment candidate

@@ -20,4 +20,6 @@ public interface AccountService {
     BaseResponse create(AccountDTO accountDTO);
 
     BaseResponse update(long id, AccountDTO accountDTO);
+
+    BaseResponse getCounselorsList();
 }

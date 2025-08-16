@@ -6,8 +6,13 @@ import com.sillador.strecs.admin.entity.Role;
 import com.sillador.strecs.admin.repository.AccountRepository;
 import com.sillador.strecs.admin.service.AccountService;
 import com.sillador.strecs.admin.service.RoleService;
+import com.sillador.strecs.entity.Teacher;
+import com.sillador.strecs.services.TeacherService;
 import com.sillador.strecs.services.impl.BaseService;
 import com.sillador.strecs.utility.BaseResponse;
+
+import lombok.AllArgsConstructor;
+
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -15,17 +20,14 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
+@AllArgsConstructor
 public class AccountServiceImpl extends BaseService implements AccountService {
 
     private final AccountRepository accountRepository;
     private final RoleService roleService;
+    private final TeacherService teacherService;
 
     private static final String ACCOUNT_DOES_NOT_EXIST_MSG = "Account does not exist";
-
-    public AccountServiceImpl(AccountRepository accountRepository, RoleService roleService){
-        this.accountRepository = accountRepository;
-        this.roleService = roleService;
-    }
 
     @Override
     public BaseResponse getAll(Map<String, String> query) {
@@ -80,7 +82,7 @@ public class AccountServiceImpl extends BaseService implements AccountService {
         }
 
         if(accountDTO.getEmail() != null && !accountDTO.getEmail().isBlank()){
-            accountOptional = accountRepository.findByUsername(accountDTO.getUsername());
+            accountOptional = accountRepository.findByEmail(accountDTO.getEmail());
             if(accountOptional.isPresent()){
                 return error("Email already exist");
             }
@@ -168,5 +170,26 @@ public class AccountServiceImpl extends BaseService implements AccountService {
                 .map(Role::getName)
                 .collect(Collectors.toSet()));
         return accountDTO;
+    }
+
+    @Override
+    public BaseResponse getCounselorsList() {
+        List<AccountDTO> counselors = new ArrayList<>();
+        accountRepository.findAllByRolesName("Counselor").forEach(d -> {
+            AccountDTO accountDTO = toDTO(d);
+            if(d.getAccountRef() != null) {
+                Optional<Teacher> optional = teacherService.findById(d.getAccountRef());
+                if(optional.isPresent()){
+                    accountDTO.setTeacher(teacherService.toDTO(optional.get()));
+                } else {
+                    accountDTO.setTeacher(null);
+                }
+
+            }
+
+            counselors.add(accountDTO);
+        });
+        
+        return success().build(counselors);
     }
 }

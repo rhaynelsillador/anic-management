@@ -65,12 +65,16 @@ public class DataInitializer implements ApplicationRunner {
 
 //        Long id = null;
 //        for (Enrollment enrollment : enrollmentRepository.findAll()){
-//            if(enrollment.getYearLevel() == null || enrollment.getSection() == null){
-//                enrollment.setYearLevel(yearLevelRepository.findByName("Grade 4").get());
-//                enrollment.setSection(sectionRepository.findByName("Section 4").get());
-//
+//            if(enrollment.getSchoolYear() == 2027){
+//                enrollment.setStatus(StudentStatus.OPEN);
 //                enrollmentRepository.save(enrollment);
+//                System.out.println("en > " + enrollment.getStudent().getStudentId());
+//
+////            }else{
+////                enrollment.setStatus(StudentStatus.);
 //            }
+
+
 //        }
 
 //        studentRepository.deleteAll();

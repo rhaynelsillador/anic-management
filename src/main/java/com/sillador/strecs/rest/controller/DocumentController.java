@@ -1,4 +1,4 @@
-package com.sillador.strecs.rest;
+package com.sillador.strecs.rest.controller;
 
 import com.sillador.strecs.entity.Document;
 import com.sillador.strecs.services.DocumentService;

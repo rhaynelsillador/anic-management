@@ -1,12 +1,12 @@
 package com.sillador.strecs.rest.controller;
 
+import com.sillador.strecs.dto.InitSchoolYearDTO;
 import com.sillador.strecs.dto.SchoolYearDTO;
 import com.sillador.strecs.services.SchoolYearService;
 import com.sillador.strecs.utility.BaseResponse;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/v1/schoolyear")
@@ -18,9 +18,25 @@ public class SchoolYearRestController {
         this.schoolYearService = schoolYearService;
     }
 
+    @GetMapping
+    public BaseResponse getAll(@RequestParam(required = false) Map<String, String> query){
+        return schoolYearService.getAll(query);
+    }
+
     @PostMapping
-    public BaseResponse initializedNewSchoolYear(@RequestBody SchoolYearDTO schoolYearDTO){
-        return schoolYearService.openNewSchoolYear(schoolYearDTO);
+    public BaseResponse createNewSchoolYear(@RequestBody SchoolYearDTO schoolYearDTO){
+        return schoolYearService.createNewSchoolYear(schoolYearDTO);
+    }
+
+    @PutMapping("/{id}")
+    public BaseResponse updateSchoolYear(@PathVariable long id, @RequestBody SchoolYearDTO schoolYearDTO){
+        return schoolYearService.updateSchoolYear(id, schoolYearDTO);
+    }
+
+
+    @PostMapping("/initialize")
+    public BaseResponse initializedNewSchoolYear(@RequestBody InitSchoolYearDTO initSchoolYearDTO){
+        return schoolYearService.openNewSchoolYear(initSchoolYearDTO);
     }
 
 }

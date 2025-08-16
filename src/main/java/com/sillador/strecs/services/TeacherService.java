@@ -13,7 +13,11 @@ public interface TeacherService {
 
     Optional<Teacher> findById(long id);
 
+    Optional<Teacher> findByAccountRef(long accountRef);
+
     BaseResponse createNewTeacher(TeacherDTO teacherDTO);
 
     BaseResponse updateTeacher(long id, TeacherDTO teacherDTO);
+
+    TeacherDTO toDTO(Teacher d);
 }

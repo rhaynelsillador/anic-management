@@ -31,4 +31,6 @@ public interface EnrollmentService {
     Enrollment save(Enrollment enrollment);
 
     List<Enrollment> findAllByStudentOrderBySchoolYearAsc(Student student);
+
+    void deleteAll(List<Enrollment> enrollmentList2);
 }

@@ -1,11 +1,8 @@
 package com.sillador.strecs.dto;
 
-import com.sillador.strecs.entity.StudentInformation;
+import com.fasterxml.jackson.annotation.JsonAlias;
 import com.sillador.strecs.enums.Gender;
 import com.sillador.strecs.enums.StudentStatus;
-import jakarta.persistence.Column;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
 import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 import lombok.Setter;
@@ -32,10 +29,9 @@ public class StudentDTO {
     private String address;
     private String contactNumber;
     private String email;
+    @JsonAlias("profilePictureUrl") // Accept both photoUrl and profilePictureUrl from frontend
     private String photoUrl;
     private StudentStatus status;
-//    private java.util.Date graduated;
-//    private Integer batch;
 
     private StudentInformationDTO information;
 

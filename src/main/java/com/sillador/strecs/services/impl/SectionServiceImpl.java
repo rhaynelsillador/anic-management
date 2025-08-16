@@ -23,6 +23,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
+import lombok.RequiredArgsConstructor;
 
 import java.sql.Timestamp;
 import java.time.Year;
@@ -32,21 +33,14 @@ import java.util.Map;
 import java.util.Optional;
 
 @Service
+@RequiredArgsConstructor
 public class SectionServiceImpl extends BaseService implements SectionService {
 
     private final SectionRepository sectionRepository;
     private final TeacherService teacherService;
     private final YearLevelService yearLevelService;
 
-    @Autowired
     private SchoolYearRepository schoolYearRepository;
-
-    public SectionServiceImpl(SectionRepository sectionRepository, TeacherService teacherService, YearLevelService yearLevelService){
-        this.sectionRepository = sectionRepository;
-        this.teacherService = teacherService;
-        this.yearLevelService = yearLevelService;
-    }
-
 
     @Override
     public BaseResponse getAll(@NotNull Map<String, String> query) {
@@ -115,7 +109,7 @@ public class SectionServiceImpl extends BaseService implements SectionService {
         section.setAdviser(teacher);
         section.setYearLevel(yearLevel.get());
         section = sectionRepository.save(section);
-        return success("Successfully updated section").build(section);
+        return success("Successfully updated section").build(toDTO(section));
     }
 
     @Override
@@ -147,12 +141,31 @@ public class SectionServiceImpl extends BaseService implements SectionService {
         }
         section.setYearLevel(yearLevel.get());
         section = sectionRepository.save(section);
-        return success("Successfully created new section").build(section);
+
+
+
+        return success("Successfully created new section").build(toDTO(section));
     }
 
     private Section toSection(SectionDTO dto, Section section){
         section.setCode(dto.getCode());
         section.setName(dto.getName());
         return section;
+    }
+
+    private SectionDTO toDTO(Section section) {
+        SectionDTO dto = new SectionDTO();
+        dto.setId(section.getId());
+        dto.setCode(section.getCode());
+        dto.setName(section.getName());
+        if (section.getAdviser() != null) {
+            dto.setAdviser(section.getAdviser().getFullName());
+            dto.setAdviserId(section.getAdviser().getId());
+        }
+        if (section.getYearLevel() != null) {
+            dto.setYearLevel(section.getYearLevel().getName());
+            dto.setYearLevelId(section.getYearLevel().getId());
+        }
+        return dto;
     }
 }

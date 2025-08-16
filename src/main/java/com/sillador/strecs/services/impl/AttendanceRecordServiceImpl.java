@@ -2,47 +2,31 @@ package com.sillador.strecs.services.impl;
 
 import com.sillador.strecs.dto.AttendanceRecordDTO;
 import com.sillador.strecs.dto.AttendanceRecordRequestDTO;
-import com.sillador.strecs.dto.EnrollmentDTO;
 import com.sillador.strecs.entity.AttendanceRecord;
 import com.sillador.strecs.entity.Enrollment;
 import com.sillador.strecs.entity.Student;
 import com.sillador.strecs.entity.SubjectCode;
 import com.sillador.strecs.enums.AttendanceStatus;
 import com.sillador.strecs.repositories.AttendanceRecordRepository;
-import com.sillador.strecs.repositories.specifications.AttendanceRecordSpecification;
-import com.sillador.strecs.repositories.specifications.BaseSpecification;
-import com.sillador.strecs.repositories.specifications.EnrollmentSpecification;
 import com.sillador.strecs.services.*;
 import com.sillador.strecs.utility.BaseResponse;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
-import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
+import lombok.RequiredArgsConstructor;
 
-import javax.swing.text.html.Option;
 import java.sql.Date;
-import java.text.DateFormat;
 import java.text.ParseException;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 
 @Service
+@RequiredArgsConstructor
 public class AttendanceRecordServiceImpl extends BaseService implements AttendanceRecordService {
 
     private final AttendanceRecordRepository attendanceRecordRepository;
     private final EnrollmentService enrollmentService;
     private final StudentService studentService;
     private final SubjectCodeService subjectCodeService;
-
-    public AttendanceRecordServiceImpl(AttendanceRecordRepository attendanceRecordRepository, EnrollmentService enrollmentService, StudentService studentService, SubjectService subjectService, SubjectCodeService subjectCodeService) {
-        this.attendanceRecordRepository = attendanceRecordRepository;
-        this.enrollmentService = enrollmentService;
-        this.studentService = studentService;
-        this.subjectCodeService = subjectCodeService;
-    }
 
     @Override
     public BaseResponse getClassAttendance(Map<String, String> query) throws ParseException {

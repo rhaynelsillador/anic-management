@@ -20,4 +20,9 @@ public class AccountRestController {
     public BaseResponse findBySmartIdentifier(@PathVariable Object identifier) {
         return accountService.findBySmartIdentifier(identifier);
     }
+
+    @GetMapping("/counselors")
+    public BaseResponse findCounselorsList() {
+        return accountService.getCounselorsList();
+    }
 }

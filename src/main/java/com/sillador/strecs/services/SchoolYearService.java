@@ -1,5 +1,6 @@
 package com.sillador.strecs.services;
 
+import com.sillador.strecs.dto.InitSchoolYearDTO;
 import com.sillador.strecs.dto.SchoolYearDTO;
 import com.sillador.strecs.entity.SchoolYear;
 import com.sillador.strecs.entity.YearLevel;
@@ -16,6 +17,9 @@ public interface SchoolYearService {
 
     Optional<SchoolYear> findById(@NotNull(message = "Grade Level is required") Long schoolYear);
 
+    BaseResponse createNewSchoolYear(SchoolYearDTO schoolYearDTO);
 
-    BaseResponse openNewSchoolYear(SchoolYearDTO schoolYearDTO);
+    BaseResponse updateSchoolYear(long id, SchoolYearDTO schoolYearDTO);
+
+    BaseResponse openNewSchoolYear(InitSchoolYearDTO initSchoolYearDTO);
 }

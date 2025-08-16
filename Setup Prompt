@@ -1,0 +1,15 @@
+Create a setup wizard where the user need to input the School name and other need information.
+It will create a record and check if the information already provided if not show the wizard page first.
+Ask the user for
+1. School name
+2. Address
+3. Contact information
+4. Logo
+
+During the wizard setup the admin account must be auto created.
+username : admin
+password : admin1234
+
+The login page when the page is rendered must be display only when the need information above already provided otherwise keep showing the wizard page.
+
+Allow this api to be access without authorization

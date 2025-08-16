@@ -10,6 +10,7 @@ import com.sillador.strecs.services.YearLevelService;
 import com.sillador.strecs.utility.BaseResponse;
 import com.sillador.strecs.utility.CodeGenerator;
 import jakarta.annotation.Nullable;
+import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
@@ -26,16 +27,11 @@ import java.util.Map;
 import java.util.Optional;
 
 @Service
+@RequiredArgsConstructor
 public class YearLevelServiceImpl extends BaseService implements YearLevelService {
 
     private final Logger logger = LoggerFactory.getLogger(YearLevelServiceImpl.class);
-
     private final YearLevelRepository yearLevelRepository;
-
-    public YearLevelServiceImpl(YearLevelRepository yearLevelRepository){
-        this.yearLevelRepository = yearLevelRepository;
-    }
-
 
     @Override
     public BaseResponse getAll(@org.jetbrains.annotations.NotNull Map<String, String> query) {

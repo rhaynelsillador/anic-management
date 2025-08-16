@@ -11,4 +11,6 @@ public class MainDashboardDTO {
 
     private List<Object[]> studentStatusCount;
 
+    private List<Object[]> studentCountPerSchoolYear;
+
 }

@@ -1,13 +1,10 @@
 package com.sillador.strecs.entity;
 
-import com.sillador.strecs.enums.GradingPeriod;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 
-import java.sql.Timestamp;
 import java.time.LocalDateTime;
-import java.util.Date;
 
 @Setter
 @Getter

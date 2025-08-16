@@ -6,6 +6,7 @@ import com.sillador.strecs.repositories.GradeRepository;
 import com.sillador.strecs.repositories.GradingPeriodRepository;
 import com.sillador.strecs.services.*;
 import com.sillador.strecs.utility.BaseResponse;
+import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
@@ -14,6 +15,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 @Service
+@RequiredArgsConstructor
 public class GradeServiceImpl extends BaseService implements GradeService {
 
     private final GradeRepository gradeRepository;
@@ -21,16 +23,6 @@ public class GradeServiceImpl extends BaseService implements GradeService {
     private final EnrollmentService enrollmentService;
     private final StudentService studentService;
     private final GradingPeriodRepository gradingPeriodRepository;
-
-
-    public GradeServiceImpl(GradeRepository gradeRepository, SubjectCodeService subjectCodeService, EnrollmentService enrollmentService, StudentService studentService, GradingPeriodRepository gradingPeriodRepository){
-        this.gradeRepository = gradeRepository;
-        this.subjectCodeService = subjectCodeService;
-        this.enrollmentService = enrollmentService;
-        this.studentService = studentService;
-        this.gradingPeriodRepository = gradingPeriodRepository;
-    }
-
 
     @Override
     public BaseResponse getAll(@org.jetbrains.annotations.NotNull Map<String, String> query) {

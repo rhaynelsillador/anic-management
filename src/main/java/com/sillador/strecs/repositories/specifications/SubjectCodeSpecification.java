@@ -137,9 +137,19 @@ public class SubjectCodeSpecification{
                         case "subject.units":
                         case "subjectCode":
                             if(key.equals("subjectCode")) {
-                                predicates.add(criteriaBuilder.like(
-                                        criteriaBuilder.lower(subject.get("code").as(String.class)), "%"+value+"%"
-                                ));
+                                predicates.add(
+                                    criteriaBuilder.or(
+                                        criteriaBuilder.like(
+                                            criteriaBuilder.lower(subject.get("code").as(String.class)), 
+                                            "%" + value.toLowerCase() + "%"
+                                        ),
+                                        criteriaBuilder.like(
+                                            criteriaBuilder.lower(subject.get("name").as(String.class)), 
+                                            "%" + value.toLowerCase() + "%"
+                                        )
+                                    )
+                                );
+
                             }else{
                                 predicates.add(criteriaBuilder.equal(
                                         subject.get("units").as(Integer.class), Integer.parseInt(value)

@@ -15,6 +15,7 @@ public class SchoolYearDTO {
     private long id;
     @NotNull(message = "School year is required")
     private Integer year;
+    @NotNull(message = "Opening date is required")
     private java.sql.Date opening;
     private java.sql.Date closing;
     private boolean isCurrent;

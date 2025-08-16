@@ -3,16 +3,14 @@ package com.sillador.strecs.services.impl;
 import com.sillador.strecs.dto.*;
 import com.sillador.strecs.entity.*;
 import com.sillador.strecs.repositories.GradeRepository;
+import com.sillador.strecs.repositories.GradingPeriodRepository;
 import com.sillador.strecs.repositories.SchoolYearRepository;
-import com.sillador.strecs.repositories.SectionRepository;
 import com.sillador.strecs.repositories.SubjectCodeRepository;
-import com.sillador.strecs.repositories.specifications.BaseSpecification;
-import com.sillador.strecs.repositories.specifications.SectionSpecification;
 import com.sillador.strecs.repositories.specifications.SubjectCodeSpecification;
 import com.sillador.strecs.services.*;
 import com.sillador.strecs.utility.*;
+import lombok.RequiredArgsConstructor;
 import org.jetbrains.annotations.NotNull;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -20,15 +18,16 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
-import javax.swing.text.html.Option;
-import java.time.Year;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
 @Service
+@RequiredArgsConstructor
 public class SubjectCodeServiceImpl extends BaseService implements SubjectCodeService {
+
+    private static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(SubjectCodeServiceImpl.class);
 
     private final SubjectCodeRepository subjectCodeRepository;
     private final SubjectService subjectService;
@@ -38,20 +37,8 @@ public class SubjectCodeServiceImpl extends BaseService implements SubjectCodeSe
     private final EnrollmentService enrollmentService;
     private final GradeRepository gradeRepository;
     private final StudentService studentService;
-
-    @Autowired
-    private SchoolYearRepository schoolYearRepository;
-
-    public SubjectCodeServiceImpl(SubjectCodeRepository subjectCodeRepository, SubjectService subjectService,  RoomService roomService, SectionService sectionService, TeacherService teacherService, EnrollmentService enrollmentService, GradeRepository gradeRepository, StudentService studentService){
-        this.subjectCodeRepository = subjectCodeRepository;
-        this.subjectService = subjectService;
-        this.roomService = roomService;
-        this.sectionService = sectionService;
-        this.teacherService = teacherService;
-        this.enrollmentService = enrollmentService;
-        this.gradeRepository = gradeRepository;
-        this.studentService = studentService;
-    }
+    private final SchoolYearRepository schoolYearRepository;
+    private final GradingPeriodRepository gradingPeriodRepository;
 
 
     @Override
@@ -104,6 +91,7 @@ public class SubjectCodeServiceImpl extends BaseService implements SubjectCodeSe
             if(subject.isEmpty()){
                 return error("Subjects is required");
             }
+
 
             // Get the current subject code to enable the editing
             SubjectCode subjectCode = subjectCodeRepository.findByCode(dto.getCode()).orElse(null);
@@ -194,13 +182,11 @@ public class SubjectCodeServiceImpl extends BaseService implements SubjectCodeSe
 
     @Override
     public List<AcademicRecordSubjectCodeDTO> findAllByEnrollmentAsDTO(Enrollment enrollment) {
-        List<Grade> grades = gradeRepository.findAllByEnrollmentAndGradingPeriod(enrollment, 4);
+
         List<AcademicRecordSubjectCodeDTO> dtos = new ArrayList<>();
-        grades.forEach(d-> {
-            SubjectCode subjectCode = d.getSubjectCode();
+        subjectCodeRepository.findAllBySection(enrollment.getSection()).forEach(d -> {
+            SubjectCode subjectCode = d;
             Subject subject = subjectCode.getSubject();
-
-
 
             AcademicRecordSubjectCodeDTO subjectInfo = new AcademicRecordSubjectCodeDTO();
             subjectInfo.setAdviser(subjectInfo.getAdviser());
@@ -209,23 +195,42 @@ public class SubjectCodeServiceImpl extends BaseService implements SubjectCodeSe
             if(subjectCode.getRoom() != null) {
                 subjectInfo.setRoomNum(subjectCode.getRoom().getRoomNo() + " " + subjectCode.getRoom().getBuilding());
             }
-            subjectInfo.setGrades(d.getGradeScore());
-            subjectInfo.setRemarks("Passed");
+            subjectInfo.setFirstQuarter(0);
+            subjectInfo.setSecondQuarter(0);
+            subjectInfo.setThirdQuarter(0);
+            subjectInfo.setFourthQuarter(0);
+            subjectInfo.setFinalGrade(0);
             subjectInfo.setUnits(subject.getUnits());
-            if(d.getGradeScore() >= 75){
-                subjectInfo.setStatus("Passed");
-            }else{
-                subjectInfo.setStatus("Failed");
-            }
+            subjectInfo.setStatus("Not yet graded");
             if(subjectCode.getAdviser() != null) {
                 subjectInfo.setAdviser(subjectCode.getAdviser().getFullName());
             }
 
             subjectInfo.setGroupYearLevel(subject.getYearLevel().getGroupYearLevel());
 
+            gradeRepository.findAllBySubjectCode(subjectCode).forEach(grade -> {
+                switch (grade.getGradingPeriod()) {
+                    case 1 -> subjectInfo.setFirstQuarter(grade.getGradeScore());
+                    case 2 -> subjectInfo.setSecondQuarter(grade.getGradeScore());
+                    case 3 -> subjectInfo.setThirdQuarter(grade.getGradeScore());
+                    case 4 -> subjectInfo.setFourthQuarter(grade.getGradeScore());
+                    case 5 -> subjectInfo.setFinalGrade(grade.getGradeScore());
+                    default -> logger.warn("Unknown grading period: {}", grade.getGradingPeriod());
+                }
+                
+            });
+
+            if(subjectInfo.getFirstQuarter() > 0 || subjectInfo.getSecondQuarter() > 0 || subjectInfo.getThirdQuarter() > 0 || subjectInfo.getFourthQuarter() > 0) {
+                subjectInfo.setStatus("Graded");
+                subjectInfo.setRemarks("Passed");
+            } else {
+                subjectInfo.setStatus("Not yet graded");
+                subjectInfo.setRemarks("Not yet graded");
+            }
 
             dtos.add(subjectInfo);
         });
+        
         return dtos;
     }
 

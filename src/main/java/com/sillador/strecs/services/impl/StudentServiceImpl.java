@@ -11,6 +11,7 @@ import com.sillador.strecs.repositories.specifications.StudentSpecification;
 import com.sillador.strecs.services.StudentService;
 import com.sillador.strecs.utility.BaseResponse;
 import com.sillador.strecs.utility.StudentIdGenerator;
+import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -29,22 +30,12 @@ import java.util.Optional;
  * Provides methods for managing student data, including retrieval, creation, and updates.
  */
 @Service
+@RequiredArgsConstructor
 public class StudentServiceImpl extends BaseService implements StudentService {
 
     private final StudentRepository studentRepository;
     private final StudentInformationRepository studentInformationRepository;
     private final StudentConfig studentConfig;
-
-    /**
-     * Constructor for StudentServiceImpl.
-     *
-     * @param studentRepository the repository for managing Student entities
-     */
-    public StudentServiceImpl(StudentRepository studentRepository, StudentInformationRepository studentInformationRepository, StudentConfig studentConfig){
-        this.studentRepository = studentRepository;
-        this.studentInformationRepository = studentInformationRepository;
-        this.studentConfig = studentConfig;
-    }
 
     /**
      * Retrieves a paginated and sorted list of students based on query parameters.
@@ -114,6 +105,12 @@ public class StudentServiceImpl extends BaseService implements StudentService {
         }else{
             student.setStudentId(StudentIdGenerator.generateStudentId(studentConfig.getIdPrefix(), null));
         }
+
+        // Only preserve the old photoUrl if no new one is provided
+        if (studentDTO.getPhotoUrl() == null || studentDTO.getPhotoUrl().trim().isEmpty()) {
+            student.setPhotoUrl(studentDTO.getPhotoUrl());
+        }
+
         return studentRepository.save(student);
     }
 
@@ -152,7 +149,11 @@ public class StudentServiceImpl extends BaseService implements StudentService {
         }
         student.setStudentId(tmp.getStudentId());
         student.setStatus(tmp.getStatus());
-        student.setPhotoUrl(tmp.getPhotoUrl());
+        
+        // Only preserve the old photoUrl if no new one is provided
+        if (studentDTO.getPhotoUrl() == null || studentDTO.getPhotoUrl().trim().isEmpty()) {
+            student.setPhotoUrl(tmp.getPhotoUrl());
+        }
 
         /// Update the student information
         StudentInformation information;
@@ -191,6 +192,7 @@ public class StudentServiceImpl extends BaseService implements StudentService {
         studentDTO.setStatus(d.getStatus());
         studentDTO.setEmail(d.getEmail());
         studentDTO.setAddress(d.getAddress());
+        studentDTO.setPhotoUrl(d.getPhotoUrl());
 
         studentDTO.setFullName((d.getLastName() + ", " + d.getFirstName() + " " + d.getMiddleName())
                 .replace("null", "")
@@ -253,7 +255,9 @@ public class StudentServiceImpl extends BaseService implements StudentService {
         student.setContactNumber(dto.getContactNumber());
         student.setAddress(dto.getAddress());
         student.setEmail(dto.getEmail());
+        student.setPhotoUrl(dto.getPhotoUrl());
         student.setFullName((dto.getLastName()+", " + dto.getFirstName()+" " + dto.getMiddleName()).trim());
         return student;
     }
 }
+
